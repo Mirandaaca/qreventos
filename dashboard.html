@@ -191,26 +191,9 @@
         }
         let videoStream;
 
-        function startQRScanner() {
+       function startQRScanner() {
             const video = document.getElementById('qrVideo');
-            const constraints = {
-            video: {
-            facingMode: { exact: "environment" }
-            }
-            };
-
-            navigator.mediaDevices.getUserMedia(constraints)
-            .then(function(stream) {
-            videoStream = stream;
-            video.srcObject = stream;
-            video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
-            video.play();
-            requestAnimationFrame(tick);
-            })
-            .catch(function(err) {
-            console.error("Error al acceder a la cámara: ", err);
-            // Si falla al intentar usar la cámara trasera, intentamos con la configuración por defecto
-            navigator.mediaDevices.getUserMedia({ video: true })
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
                 .then(function(stream) {
                     videoStream = stream;
                     video.srcObject = stream;
@@ -219,9 +202,8 @@
                     requestAnimationFrame(tick);
                 })
                 .catch(function(err) {
-                    console.error("Error al acceder a cualquier cámara: ", err);
+                    console.error("Error al acceder a la cámara: ", err);
                 });
-            });
         }
 
         function stopQRScanner() {
