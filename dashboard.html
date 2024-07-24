@@ -177,13 +177,20 @@
     <script>
          let personaActual = null;
 
-        function openQRScanner() {
-            document.getElementById('qrScannerModal').classList.remove('hidden');
-            document.getElementById('qrReader').classList.remove('hidden');
-            document.getElementById('personaDetails').classList.add('hidden');
-            document.getElementById('saveButton').classList.add('hidden');
-            startQRScanner();
-        }
+       function openQRScanner() {
+    document.getElementById('qrScannerModal').classList.remove('hidden');
+    document.getElementById('qrReader').classList.remove('hidden');
+    document.getElementById('personaDetails').classList.add('hidden');
+    document.getElementById('saveButton').classList.add('hidden');
+    
+    // Agregar mensaje de carga
+    const loadingMessage = document.createElement('p');
+    loadingMessage.id = 'loadingMessage';
+    loadingMessage.textContent = 'Accediendo a la cámara...';
+    document.getElementById('qrReader').appendChild(loadingMessage);
+    
+    startQRScanner();
+}
 
         function closeQRScanner() {
             document.getElementById('qrScannerModal').classList.add('hidden');
@@ -192,19 +199,33 @@
         let videoStream;
 
        function startQRScanner() {
-            const video = document.getElementById('qrVideo');
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then(function(stream) {
-                    videoStream = stream;
-                    video.srcObject = stream;
-                    video.setAttribute("playsinline", true);
-                    video.play();
-                    requestAnimationFrame(tick);
-                })
-                .catch(function(err) {
-                    console.error("Error al acceder a la cámara: ", err);
-                });
-        }
+    const video = document.getElementById('qrVideo');
+    
+    // Intentar primero con la cámara trasera
+    navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: { exact: "environment" } } 
+    })
+    .then(setupStream)
+    .catch(() => {
+        // Si falla, intentar con cualquier cámara disponible
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(setupStream)
+            .catch(handleError);
+    });
+
+    function setupStream(stream) {
+        videoStream = stream;
+        video.srcObject = stream;
+        video.setAttribute("playsinline", true); // Importante para iOS
+        video.play();
+        requestAnimationFrame(tick);
+    }
+
+    function handleError(error) {
+        console.error("Error al acceder a la cámara: ", error);
+        alert("No se pudo acceder a la cámara. Por favor, asegúrese de que su dispositivo tiene una cámara y que ha dado permiso para usarla.");
+    }
+}
 
         function stopQRScanner() {
             if (videoStream) {
