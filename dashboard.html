@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div x-data="{ sidebarOpen: false, currentSection: 'personas' }" class="flex h-screen bg-gray-200">
+        <!-- Sidebar -->
+        <div :class="sidebarOpen ? 'block' : 'hidden'" class="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform md:relative md:translate-x-0 transition duration-200 ease-in-out md:flex md:flex-col md:justify-between overflow-y-auto">
+            <nav>
+                <a @click="currentSection = 'personas'" href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+                    Gestión de Personas
+                </a>
+                <a @click="currentSection = 'usuarios'" href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+                    Gestión de Usuarios
+                </a>
+                <a @click="openQRScanner()" href="#" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+                    Escanear QR
+                </a>
+            </nav>
+            <div class="p-4">
+                <button id="logoutButton" class="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <!-- Content area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="flex justify-between items-center p-4 bg-white border-b">
+                <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 focus:outline-none md:hidden">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <h1 class="text-xl font-semibold">Dashboard</h1>
+                <div></div> <!-- Placeholder para alineación -->
+            </header>
+
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-4">
+                <!-- Gestión de Personas -->
+                <div x-show="currentSection === 'personas'">
+                    <h2 class="text-2xl font-semibold mb-4">Gestión de Personas</h2>
+                    <div class="mb-4 flex justify-between items-center">
+                        <input type="text" id="personaSearch" placeholder="Buscar personas..." class="px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                        <button id="addPersonaBtn" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Agregar Persona</button>
+                    </div>
+                    <div id="personasList" class="space-y-4">
+                        <!-- La lista de personas se cargará aquí -->
+                    </div>
+                </div>
+
+                <!-- Gestión de Usuarios (placeholder) -->
+                <div x-show="currentSection === 'usuarios'">
+                    <h2 class="text-2xl font-semibold mb-4">Gestión de Usuarios</h2>
+                    <div class="mb-4 flex justify-between items-center">
+                        <input type="text" id="usuarioSearch" placeholder="Buscar usuarios..." class="px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                        <button id="addUsuarioBtn" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Agregar Usuario</button>
+                    </div>
+                    <div id="usuariosList" class="space-y-4">
+                        <!-- La lista de usuarios se cargará aquí -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="usuarioModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 id="usuarioModalTitle" class="text-lg font-semibold mb-4">Agregar Usuario</h3>
+            <form id="usuarioForm">
+                <input type="hidden" id="usuarioId">
+                <div class="mb-4">
+                    <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Nombre de usuario:</label>
+                    <input type="text" id="username" name="username" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Contraseña:</label>
+                    <input type="password" id="password" name="password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" onclick="cerrarModalUsuario()" class="bg-gray-300 text-gray-800 py-2 px-4 rounded mr-2 hover:bg-gray-400 transition duration-200">Cancelar</button>
+                    <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!--- Modal para agregar/editar persona (actualizado) -->
+    <div id="personaModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 id="modalTitle" class="text-lg font-semibold mb-4">Agregar Persona</h3>
+            <form id="personaForm">
+                <input type="hidden" id="personaId">
+                <div class="mb-4">
+                    <label for="nombres" class="block text-gray-700 text-sm font-bold mb-2">Nombres:</label>
+                    <input type="text" id="nombres" name="nombres" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="apellidos" class="block text-gray-700 text-sm font-bold mb-2">Apellidos:</label>
+                    <input type="text" id="apellidos" name="apellidos" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label for="correo" class="block text-gray-700 text-sm font-bold mb-2">Correo:</label>
+                    <input type="email" id="correo" name="correo" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="celular" class="block text-gray-700 text-sm font-bold mb-2">Celular:</label>
+                    <input type="tel" id="celular" name="celular" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="haIngresado" name="haIngresado" class="form-checkbox h-5 w-5 text-blue-600">
+                        <span class="ml-2 text-gray-700">Ha ingresado</span>
+                    </label>
+                </div>
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="haPagado" name="haPagado" class="form-checkbox h-5 w-5 text-blue-600">
+                        <span class="ml-2 text-gray-700">Ha pagado</span>
+                    </label>
+                </div>
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="haComido" name="haComido" class="form-checkbox h-5 w-5 text-blue-600">
+                        <span class="ml-2 text-gray-700">Ha comido</span>
+                    </label>
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" id="cancelarBtn" class="bg-gray-300 text-gray-800 py-2 px-4 rounded mr-2 hover:bg-gray-400 transition duration-200">Cancelar</button>
+                    <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="qrModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 class="text-lg font-semibold mb-4">Código QR</h3>
+            <div id="qrContainer" class="flex justify-center"></div>
+            <div class="mt-4 flex justify-end">
+                <button onclick="cerrarModalQR()" class="bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400 transition duration-200">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <div id="qrScannerModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 class="text-lg font-semibold mb-4">Escanear Código QR</h3>
+            <div id="qrReader" class="mb-4">
+                <video id="qrVideo" class="w-full"></video>
+            </div>
+            <div id="personaDetails" class="mb-4 hidden">
+                <h4 class="font-semibold mb-2">Detalles de la Persona</h4>
+                <p><strong>Nombres:</strong> <span id="personaNombres"></span></p>
+                <p><strong>Apellidos:</strong> <span id="personaApellidos"></span></p>
+                <p><strong>Correo:</strong> <span id="personaCorreo"></span></p>
+                <p><strong>Celular:</strong> <span id="personaCelular"></span></p>
+                <div class="mt-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="personaHaIngresado" class="form-checkbox h-5 w-5 text-blue-600">
+                        <span class="ml-2 text-gray-700">Ha ingresado</span>
+                    </label>
+                </div>
+                <div class="mt-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="personaHaComido" class="form-checkbox h-5 w-5 text-blue-600">
+                        <span class="ml-2 text-gray-700">Ha comido</span>
+                    </label>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button onclick="closeQRScanner()" class="bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400 transition duration-200 mr-2">Cerrar</button>
+                <button id="saveButton" onclick="guardarCambiosPersona()" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200 hidden">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+    <script>
+         let personaActual = null;
+
+        function openQRScanner() {
+            document.getElementById('qrScannerModal').classList.remove('hidden');
+            document.getElementById('qrReader').classList.remove('hidden');
+            document.getElementById('personaDetails').classList.add('hidden');
+            document.getElementById('saveButton').classList.add('hidden');
+            startQRScanner();
+        }
+
+        function closeQRScanner() {
+            document.getElementById('qrScannerModal').classList.add('hidden');
+            stopQRScanner();
+        }
+        let videoStream;
+
+        function startQRScanner() {
+            const video = document.getElementById('qrVideo');
+            const constraints = {
+            video: {
+            facingMode: { exact: "environment" }
+            }
+            };
+
+            navigator.mediaDevices.getUserMedia(constraints)
+            .then(function(stream) {
+            videoStream = stream;
+            video.srcObject = stream;
+            video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+            video.play();
+            requestAnimationFrame(tick);
+            })
+            .catch(function(err) {
+            console.error("Error al acceder a la cámara: ", err);
+            // Si falla al intentar usar la cámara trasera, intentamos con la configuración por defecto
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    videoStream = stream;
+                    video.srcObject = stream;
+                    video.setAttribute("playsinline", true);
+                    video.play();
+                    requestAnimationFrame(tick);
+                })
+                .catch(function(err) {
+                    console.error("Error al acceder a cualquier cámara: ", err);
+                });
+            });
+        }
+
+        function stopQRScanner() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function tick() {
+            const video = document.getElementById('qrVideo');
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                if (code) {
+                    console.log("Código QR detectado", code.data);
+                    handleQRCode(code.data);
+                    stopQRScanner();
+                } else {
+                    requestAnimationFrame(tick);
+                }
+            } else {
+                requestAnimationFrame(tick);
+            }
+        }
+
+        async function handleQRCode(qrData) {
+            try {
+                const personId = qrData.split('/').pop();
+                const response = await fetch(`http://qreventos.somee.com/api/Personas/ObtenerPersonaPorId?id=${personId}`);
+                
+                if (response.ok) {
+                    personaActual = await response.json();
+                    mostrarDetallesPersona(personaActual);
+                } else {
+                    alert('No se encontró la persona asociada a este código QR');
+                }
+            } catch (error) {
+                console.error('Error al procesar el código QR:', error);
+                alert('Hubo un error al procesar el código QR');
+            }
+        }
+        function mostrarDetallesPersona(persona) {
+            document.getElementById('personaNombres').textContent = persona.nombres;
+            document.getElementById('personaApellidos').textContent = persona.apellidos;
+            document.getElementById('personaCorreo').textContent = persona.correo;
+            document.getElementById('personaCelular').textContent = persona.celular;
+            document.getElementById('personaHaIngresado').checked = persona.haIngresado;
+            document.getElementById('personaHaComido').checked = persona.haComido;
+
+            document.getElementById('qrReader').classList.add('hidden');
+            document.getElementById('personaDetails').classList.remove('hidden');
+            document.getElementById('saveButton').classList.remove('hidden');
+        }
+        async function guardarCambiosPersona() {
+            if (!personaActual) return;
+
+            personaActual.haIngresado = document.getElementById('personaHaIngresado').checked;
+            personaActual.haComido = document.getElementById('personaHaComido').checked;
+
+            try {
+                const response = await fetch('http://qreventos.somee.com/api/Personas/ActualizarPersona', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(personaActual)
+                });
+
+                if (response.ok) {
+                    alert('Cambios guardados correctamente');
+                    document.getElementById('qrReader').classList.remove('hidden');
+                    document.getElementById('personaDetails').classList.add('hidden');
+                    document.getElementById('saveButton').classList.add('hidden');
+                    startQRScanner(); // Reiniciar el escaneo
+                } else {
+                    alert('Error al guardar los cambios');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar los cambios');
+            }
+        }
+        function filtrarPersonas(searchTerm) {
+            const personas = document.querySelectorAll('#personasList > div');
+            personas.forEach(persona => {
+            const texto = persona.textContent.toLowerCase();
+            if (texto.includes(searchTerm.toLowerCase())) {
+                persona.style.display = '';
+            } else {
+            persona.style.display = 'none';
+            }});
+        }
+
+        function filtrarUsuarios(searchTerm) {
+        const usuarios = document.querySelectorAll('#usuariosList > div');
+        usuarios.forEach(usuario => {
+        const texto = usuario.textContent.toLowerCase();
+        if (texto.includes(searchTerm.toLowerCase())) {
+            usuario.style.display = '';
+        } else {
+            usuario.style.display = 'none';
+        }
+    });
+}
+
+        // Funciones para manejar la lista de personas (actualizada)
+        async function cargarPersonas() {
+            if (!verificarSesion()) return;
+    try {
+        const usuario = JSON.parse(localStorage.getItem('user'));
+        const response = await fetch('http://qreventos.somee.com/api/Personas/ObtenerListaDePersonas', {
+            headers: {
+                'UserId': usuario.id,
+                'Username': usuario.username
+            }
+        });
+        if (response.ok) {
+            const personas = await response.json();
+            const listaHTML = personas.map(persona => `
+                <div class="bg-white p-4 rounded-lg shadow flex justify-between items-center">
+                    <div>
+                        <h3 class="font-semibold">${persona.nombres} ${persona.apellidos}</h3>
+                        <p>${persona.correo} - ${persona.celular}</p>
+                        <p class="text-sm">
+                            <span class="mr-2 ${persona.haIngresado ? 'text-green-600' : 'text-red-600'}">
+                                ${persona.haIngresado ? '✓' : '✗'} Ingresado
+                            </span>
+                            <span class="mr-2 ${persona.haPagado ? 'text-green-600' : 'text-red-600'}">
+                                ${persona.haPagado ? '✓' : '✗'} Pagado
+                            </span>
+                            <span class="${persona.haComido ? 'text-green-600' : 'text-red-600'}">
+                                ${persona.haComido ? '✓' : '✗'} Comido
+                            </span>
+                        </p>
+                    </div>
+                    <div>
+                        <button onclick="editarPersona(${persona.id})" class="bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600 transition duration-200">Editar</button>
+                        <button onclick="eliminarPersona(${persona.id})" class="bg-red-500 text-white py-1 px-2 rounded mr-2 hover:bg-red-600 transition duration-200">Eliminar</button>
+                        <button onclick="reenviarQR(${persona.id})" class="bg-green-500 text-white py-1 px-2 rounded mr-2 hover:bg-green-600 transition duration-200">Reenviar QR</button>
+                        <button onclick="mostrarQR(${persona.id})" class="bg-blue-500 text-white py-1 px-2 rounded mr-2 hover:bg-blue-600 transition duration-200">Mostrar QR</button>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('personasList').innerHTML = listaHTML;
+        } else if (response.status === 401) {
+            alert('Sesión no válida. Por favor, inicie sesión nuevamente.');
+            localStorage.removeItem('user');
+            window.location.href = '/index.html';
+        } else {
+            console.error('Error al cargar personas');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Función para mostrar el QR
+async function mostrarQR(id) {
+    try {
+        const response = await fetch(`http://qreventos.somee.com/api/Personas/VerQR?id=${id}`);
+        if (response.ok) {
+            const qrData = await response.json();
+            const qrContainer = document.getElementById('qrContainer');
+            qrContainer.innerHTML = `<img src="data:image/png;base64,${qrData.base64String}" alt="Código QR">`;
+            document.getElementById('qrModal').classList.remove('hidden');
+        } else {
+            console.error('Error al obtener QR');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    } 
+}
+function cerrarModalQR() {
+    document.getElementById('qrModal').classList.add('hidden');
+}
+async function guardarPersona(event) {
+    event.preventDefault();
+    const personaId = document.getElementById('personaId').value;
+    const persona = {
+        id: personaId, // Incluimos el id para la actualización
+        nombres: document.getElementById('nombres').value,
+        apellidos: document.getElementById('apellidos').value,
+        correo: document.getElementById('correo').value,
+        celular: document.getElementById('celular').value,
+        haIngresado: document.getElementById('haIngresado').checked,
+        haPagado: document.getElementById('haPagado').checked,
+        haComido: document.getElementById('haComido').checked
+    };
+
+    try {
+        let url, method;
+        if (personaId) {
+            url = 'http://qreventos.somee.com/api/Personas/ActualizarPersona';
+            method = 'PATCH';
+        } else {
+            url = 'http://qreventos.somee.com/api/Personas/GuardarPersonaYEnviarQR';
+            method = 'POST';
+        }
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(persona)
+        });
+
+        if (response.ok) {
+            cerrarModal();
+            cargarPersonas();
+        } else {
+            console.error('Error al guardar persona');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function editarPersona(id) {
+    try {
+        const response = await fetch(`http://qreventos.somee.com/api/Personas/ObtenerPersonaPorId?id=${id}`);
+        if (response.ok) {
+            const persona = await response.json();
+            document.getElementById('personaId').value = persona.id;
+            document.getElementById('nombres').value = persona.nombres;
+            document.getElementById('apellidos').value = persona.apellidos;
+            document.getElementById('correo').value = persona.correo;
+            document.getElementById('celular').value = persona.celular;
+            document.getElementById('haIngresado').checked = persona.haIngresado;
+            document.getElementById('haPagado').checked = persona.haPagado;
+            document.getElementById('haComido').checked = persona.haComido;
+            document.getElementById('modalTitle').textContent = 'Editar Persona';
+            abrirModal();
+        } else {
+            console.error('Error al obtener persona');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function eliminarPersona(id) {
+    if (confirm('¿Está seguro de que desea eliminar esta persona?')) {
+        try {
+            const response = await fetch(`http://qreventos.somee.com/api/Personas/EliminarPersona?id=${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                cargarPersonas();
+            } else {
+                console.error('Error al eliminar persona');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+}
+
+async function reenviarQR(id) {
+    try {
+        const response = await fetch(`http://qreventos.somee.com/api/Personas/ReenviarQR?id=${id}`, { method: 'POST' });
+        if (response.ok) {
+            alert('QR reenviado exitosamente');
+        } else {
+            console.error('Error al reenviar QR');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+async function cargarUsuarios() {
+    if (!verificarSesion()) return;
+    try {
+        const usuario = JSON.parse(localStorage.getItem('user'));
+        const response = await fetch('http://qreventos.somee.com/api/Usuarios/ObtenerListaDeUsuarios', {
+            headers: {
+                'UserId': usuario.id,
+                'Username': usuario.username
+            }
+        });
+        if (response.ok) {
+            const usuarios = await response.json();
+            const listaHTML = usuarios.map(usuario => `
+                <div class="bg-white p-4 rounded-lg shadow flex justify-between items-center">
+                    <div>
+                        <h3 class="font-semibold">${usuario.username}</h3>
+                    </div>
+                    <div>
+                        <button onclick="editarUsuario(${usuario.id})" class="bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600 transition duration-200">Editar</button>
+                        <button onclick="eliminarUsuario(${usuario.id})" class="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600 transition duration-200">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('usuariosList').innerHTML = listaHTML;
+        }else if (response.status === 401) {
+            alert('Sesión no válida. Por favor, inicie sesión nuevamente.');
+            localStorage.removeItem('user');
+            window.location.href = '/index.html';
+        } 
+        else {
+            console.error('Error al cargar usuarios');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    } 
+}
+async function guardarUsuario(event) {
+    event.preventDefault();
+    const usuarioId = document.getElementById('usuarioId').value;
+    const usuario = {
+        id: usuarioId,
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value
+    };
+
+    try {
+        let url, method;
+        if (usuarioId) {
+            url = 'http://qreventos.somee.com/api/Usuarios/EditarUsuario';
+            method = 'PATCH';
+        } else {
+            url = 'http://qreventos.somee.com/api/Usuarios/CrearUsuario';
+            method = 'POST';
+        }
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(usuario)
+        });
+
+        if (response.ok) {
+            cerrarModalUsuario();
+            cargarUsuarios();
+        } else {
+            console.error('Error al guardar usuario');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    } 
+}
+
+async function editarUsuario(id) {
+    try {
+        const response = await fetch(`http://qreventos.somee.com/api/Usuarios/ObtenerUsuarioPorId?id=${id}`);
+        if (response.ok) {
+            const usuario = await response.json();
+            document.getElementById('usuarioId').value = usuario.id;
+            document.getElementById('username').value = usuario.username;
+            document.getElementById('password').value = ''; // Por seguridad, no mostramos la contraseña actual
+            document.getElementById('usuarioModalTitle').textContent = 'Editar Usuario';
+            abrirModalUsuario();
+        } else {
+            console.error('Error al obtener usuario');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function eliminarUsuario(id) {
+    if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
+        try {
+            const response = await fetch(`http://qreventos.somee.com/api/Usuarios/EliminarUsuario?id=${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                cargarUsuarios();
+            } else {
+                console.error('Error al eliminar usuario');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+}
+
+function abrirModalUsuario() {
+    document.getElementById('usuarioModal').classList.remove('hidden');
+}
+
+function cerrarModalUsuario() {
+    document.getElementById('usuarioModal').classList.add('hidden');
+    document.getElementById('usuarioForm').reset();
+    document.getElementById('usuarioId').value = '';
+    document.getElementById('usuarioModalTitle').textContent = 'Agregar Usuario';
+}
+
+// Event listeners adicionales
+document.getElementById('personaSearch').addEventListener('input', (e) => {
+                filtrarPersonas(e.target.value);
+            });
+document.getElementById('usuarioSearch').addEventListener('input', (e) => {
+                filtrarUsuarios(e.target.value);
+            });
+document.getElementById('addUsuarioBtn').addEventListener('click', abrirModalUsuario);
+document.getElementById('usuarioForm').addEventListener('submit', guardarUsuario);
+        // Funciones para manejar el modal (sin cambios)
+        function abrirModal() {
+            document.getElementById('personaModal').classList.remove('hidden');
+        }
+
+        function cerrarModal() {
+            document.getElementById('personaModal').classList.add('hidden');
+            document.getElementById('personaForm').reset();
+            document.getElementById('personaId').value = '';
+            document.getElementById('modalTitle').textContent = 'Agregar Persona';
+        }
+
+        // Event listeners (sin cambios)
+        document.getElementById('addPersonaBtn').addEventListener('click', () => {
+            cerrarModal();
+            abrirModal();
+        });
+
+        document.getElementById('cancelarBtn').addEventListener('click', cerrarModal);
+
+        document.getElementById('personaForm').addEventListener('submit', guardarPersona);
+
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            localStorage.removeItem('user');
+            window.location.href = '/index.html';
+        });
+        function verificarSesion() {
+        const usuario = JSON.parse(localStorage.getItem('user'));
+        if (!usuario || !usuario.id || !usuario.username) {
+        window.location.href = '/index.html';
+        return false;
+        }
+        return true;
+}
+        // Cargar personas al iniciar
+        cargarPersonas();
+        cargarUsuarios();
+    </script>
+</body>
+</html>
