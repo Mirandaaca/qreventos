@@ -647,7 +647,7 @@ document.getElementById('usuarioForm').addEventListener('submit', guardarUsuario
         function verificarSesion() {
         const usuario = JSON.parse(localStorage.getItem('user'));
         if (!usuario || !usuario.id || !usuario.username) {
-        window.location.href = '/qreventos/index.html';
+        window.location.href = 'https://mirandaaca.github.io/index.html';
         return false;
         }
         return true;
