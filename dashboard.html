@@ -257,7 +257,7 @@
         async function handleQRCode(qrData) {
             try {
                 const personId = qrData.split('/').pop();
-                const response = await fetch(`http://qreventos.somee.com/api/Personas/ObtenerPersonaPorId?id=${personId}`);
+                const response = await fetch(`https://qreventos.somee.com/api/Personas/ObtenerPersonaPorId?id=${personId}`);
                 
                 if (response.ok) {
                     personaActual = await response.json();
@@ -289,7 +289,7 @@
             personaActual.haComido = document.getElementById('personaHaComido').checked;
 
             try {
-                const response = await fetch('http://qreventos.somee.com/api/Personas/ActualizarPersona', {
+                const response = await fetch('https://qreventos.somee.com/api/Personas/ActualizarPersona', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(personaActual)
@@ -337,7 +337,7 @@
             if (!verificarSesion()) return;
     try {
         const usuario = JSON.parse(localStorage.getItem('user'));
-        const response = await fetch('http://qreventos.somee.com/api/Personas/ObtenerListaDePersonas', {
+        const response = await fetch('https://qreventos.somee.com/api/Personas/ObtenerListaDePersonas', {
             headers: {
                 'UserId': usuario.id,
                 'Username': usuario.username
@@ -386,7 +386,7 @@
 // Función para mostrar el QR
 async function mostrarQR(id) {
     try {
-        const response = await fetch(`http://qreventos.somee.com/api/Personas/VerQR?id=${id}`);
+        const response = await fetch(`https://qreventos.somee.com/api/Personas/VerQR?id=${id}`);
         if (response.ok) {
             const qrData = await response.json();
             const qrContainer = document.getElementById('qrContainer');
@@ -419,10 +419,10 @@ async function guardarPersona(event) {
     try {
         let url, method;
         if (personaId) {
-            url = 'http://qreventos.somee.com/api/Personas/ActualizarPersona';
+            url = 'https://qreventos.somee.com/api/Personas/ActualizarPersona';
             method = 'PATCH';
         } else {
-            url = 'http://qreventos.somee.com/api/Personas/GuardarPersonaYEnviarQR';
+            url = 'https://qreventos.somee.com/api/Personas/GuardarPersonaYEnviarQR';
             method = 'POST';
         }
         
@@ -445,7 +445,7 @@ async function guardarPersona(event) {
 
 async function editarPersona(id) {
     try {
-        const response = await fetch(`http://qreventos.somee.com/api/Personas/ObtenerPersonaPorId?id=${id}`);
+        const response = await fetch(`https://qreventos.somee.com/api/Personas/ObtenerPersonaPorId?id=${id}`);
         if (response.ok) {
             const persona = await response.json();
             document.getElementById('personaId').value = persona.id;
@@ -469,7 +469,7 @@ async function editarPersona(id) {
 async function eliminarPersona(id) {
     if (confirm('¿Está seguro de que desea eliminar esta persona?')) {
         try {
-            const response = await fetch(`http://qreventos.somee.com/api/Personas/EliminarPersona?id=${id}`, { method: 'DELETE' });
+            const response = await fetch(`https://qreventos.somee.com/api/Personas/EliminarPersona?id=${id}`, { method: 'DELETE' });
             if (response.ok) {
                 cargarPersonas();
             } else {
@@ -483,7 +483,7 @@ async function eliminarPersona(id) {
 
 async function reenviarQR(id) {
     try {
-        const response = await fetch(`http://qreventos.somee.com/api/Personas/ReenviarQR?id=${id}`, { method: 'POST' });
+        const response = await fetch(`https://qreventos.somee.com/api/Personas/ReenviarQR?id=${id}`, { method: 'POST' });
         if (response.ok) {
             alert('QR reenviado exitosamente');
         } else {
@@ -497,7 +497,7 @@ async function cargarUsuarios() {
     if (!verificarSesion()) return;
     try {
         const usuario = JSON.parse(localStorage.getItem('user'));
-        const response = await fetch('http://qreventos.somee.com/api/Usuarios/ObtenerListaDeUsuarios', {
+        const response = await fetch('https://qreventos.somee.com/api/Usuarios/ObtenerListaDeUsuarios', {
             headers: {
                 'UserId': usuario.id,
                 'Username': usuario.username
@@ -541,10 +541,10 @@ async function guardarUsuario(event) {
     try {
         let url, method;
         if (usuarioId) {
-            url = 'http://qreventos.somee.com/api/Usuarios/EditarUsuario';
+            url = 'https://qreventos.somee.com/api/Usuarios/EditarUsuario';
             method = 'PATCH';
         } else {
-            url = 'http://qreventos.somee.com/api/Usuarios/CrearUsuario';
+            url = 'https://qreventos.somee.com/api/Usuarios/CrearUsuario';
             method = 'POST';
         }
         
@@ -567,7 +567,7 @@ async function guardarUsuario(event) {
 
 async function editarUsuario(id) {
     try {
-        const response = await fetch(`http://qreventos.somee.com/api/Usuarios/ObtenerUsuarioPorId?id=${id}`);
+        const response = await fetch(`https://qreventos.somee.com/api/Usuarios/ObtenerUsuarioPorId?id=${id}`);
         if (response.ok) {
             const usuario = await response.json();
             document.getElementById('usuarioId').value = usuario.id;
@@ -586,7 +586,7 @@ async function editarUsuario(id) {
 async function eliminarUsuario(id) {
     if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
         try {
-            const response = await fetch(`http://qreventos.somee.com/api/Usuarios/EliminarUsuario?id=${id}`, { method: 'DELETE' });
+            const response = await fetch(`https://qreventos.somee.com/api/Usuarios/EliminarUsuario?id=${id}`, { method: 'DELETE' });
             if (response.ok) {
                 cargarUsuarios();
             } else {
