@@ -84,7 +84,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     localStorage.setItem('user', JSON.stringify(data));
-                    window.location.href = 'https://mirandaaca.github.io/qreventos/dashboard.html';
+                    window.location.href = '/dashboard.html';
                 } else {
                     showAlert('Error', 'Usuario o contraseña incorrectos', 'error');
                 }
