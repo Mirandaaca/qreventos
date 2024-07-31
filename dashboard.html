@@ -957,14 +957,14 @@ document.getElementById('usuarioForm').addEventListener('submit', guardarUsuario
 
         document.getElementById('logoutButton').addEventListener('click', () => {
             localStorage.removeItem('user');
-            window.location.href = 'https://mirandaaca.github.io/qreventos/';
+            window.location.href = '/index.html';
         });
         function verificarSesion() {
             showLoading();
             const usuario = JSON.parse(localStorage.getItem('user'));
             if (!usuario || !usuario.id || !usuario.username) {
                 hideLoading();
-                window.location.href = 'https://mirandaaca.github.io/qreventos/';
+                window.location.href = '/index.html';
                 return false;
             }
             hideLoading();
